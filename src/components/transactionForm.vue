@@ -1,7 +1,4 @@
 <script setup>
-//   defineProps({balance: Number,
-//   income: Number,
-//   expense: Number})
     import { ref, watch } from 'vue'
 
     const emit = defineEmits(['add-transaction'])
@@ -27,7 +24,7 @@
       comment: commentNew.value
     }
     emit('add-transaction',newTransaction)
-    // transactions.value.push(newTransaction)
+    sumValue.value = 0
   }
 </script>
 
