@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import BalanceBlock from './components/balanceBlock.vue'
+import TransactionForm from './components/transactionForm.vue'
+
   const transactions = ref([
     {
       id: 1,
@@ -37,33 +39,24 @@ import BalanceBlock from './components/balanceBlock.vue'
     return income.value- expense.value
   })
 
-  function addTransaction(){
-    if(sumValue.value<=0) return
-    const newTransaction={
-      id: Date.now(),
-      type: selected.value,
-      date: transactionDate.value,
-      sum: +sumValue.value,
-      category: categoryValue.value,
-      comment: 'new'
-    }
-    transactions.value.push(newTransaction)
+  function addTransaction(transaction){
+    transactions.value.push(transaction)
   }
-  const selected = ref('expense')
+  // const selected = ref('expense')
 
   function selectedConsole(){
     console.log(selected.value)
     console.log(transactionDate.value)
   }
 
-  const transactionDate = ref((new Date().toISOString().split('T')[0]))
-  const sumValue = ref(0)
-  const categoryValue = ref('Food')
-  const commentNew = ref('')
-  watch(selected,(newValue)=>{
-     if(newValue==='expense') categoryValue.value = 'Food' 
-     else categoryValue.value = 'Work'
-  })
+  // const transactionDate = ref((new Date().toISOString().split('T')[0]))
+  // const sumValue = ref(0)
+  // const categoryValue = ref('Food')
+  // const commentNew = ref('')
+  // watch(selected,(newValue)=>{
+  //    if(newValue==='expense') categoryValue.value = 'Food' 
+  //    else categoryValue.value = 'Work'
+  // })
 </script>
 
 
@@ -78,15 +71,10 @@ import BalanceBlock from './components/balanceBlock.vue'
       :balance = "balance"
       :income = "income"
       :expense = "expense"/>
-    <!-- <div class="result">
-      <p>Balance</p>
-      <p>{{balance}}</p>
-      <p>Income</p>
-      <p>{{income}}</p>
-      <p>Expenses</p>
-      <p>{{expense}}</p>
-   </div> -->
 
+    <TransactionForm 
+      @add-transaction="addTransaction"/>
+<!-- 
    <div>
     <select v-model="selected">
       <option value="income">income</option>
@@ -106,7 +94,7 @@ import BalanceBlock from './components/balanceBlock.vue'
     <input v-model="commentNew">
     <button @click="selectedConsole">Console</button>
     <button @click="addTransaction">Add transaction</button>
-   </div>
+   </div> -->
    
    <div>
       <p v-for="transaction in transactions" :key="transaction.id">
