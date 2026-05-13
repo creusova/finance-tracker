@@ -1,51 +1,68 @@
 <script setup>
-    import { ref, watch } from 'vue'
+    import { reactive, ref, watch } from 'vue'
 
     const emit = defineEmits(['add-transaction'])
 
-    const selected = ref('expense')
-    const transactionDate = ref((new Date().toISOString().split('T')[0]))
-    const sumValue = ref(0)
-    const categoryValue = ref('Food')
-    const commentNew = ref('')
-    watch(selected,(newValue)=>{
-        if(newValue==='expense') categoryValue.value = 'Food' 
-        else categoryValue.value = 'Work'
+    const transaction = reactive({
+      type: 'expense',
+      date: (new Date().toISOString().split('T')[0]),
+      sum: 0,
+      category: 'Food',
+      comment: ''
+    })
+
+    const categorySelect = {
+      expense:[
+        {text: 'Food', value: 'Food'},
+        {text: 'Car', value: 'Car'},
+        {text: 'Home', value: 'Home'},
+      ],
+      income:[
+        {text: 'Work', value: 'Work'},
+        {text: 'Card', value: 'Card'},
+      ]
+    }
+
+    watch(()=>transaction.type,(newValue)=>{
+      if(newValue==='expense') transaction.category = 'Food'
+      else transaction.category = 'Work'
   })
 
   function addTransaction(){
-    if(sumValue.value<=0) return
+    if(transaction.sum<=0) return
     const newTransaction={
       id: Date.now(),
-      type: selected.value,
-      date: transactionDate.value,
-      sum: +sumValue.value,
-      category: categoryValue.value,
-      comment: commentNew.value
+      type: transaction.type,
+      date: transaction.date,
+      sum: +transaction.sum,
+      category: transaction.category,
+      comment: transaction.comment
     }
+    
     emit('add-transaction',newTransaction)
-    sumValue.value = 0
+    transaction.sum = 0
+    transaction.comment =''
   }
+
 </script>
 
 <template>
   <div>
-    <select v-model="selected">
-      <option value="income">income</option>
-      <option value="expense">expense</option>
-    </select>
-    <input type="date" v-model="transactionDate">
-    <input type ="number" v-model="sumValue">
-    <select v-if="selected==='expense'" v-model="categoryValue">
-        <option value="Food">Food</option>
-        <option value="Car">Car</option>
-        <option value="Home">Home</option>
-    </select>
-    <select v-else-if="selected==='income'" v-model="categoryValue">
-        <option value="Work">Work</option>
-        <option value="Card">Card</option>
-    </select>
-    <input v-model="commentNew">
-    <button @click="addTransaction">Add transaction</button>
-   </div>
+    <form @submit.prevent="addTransaction">
+      <select v-model="transaction.type">
+        <option value="income">income</option>
+        <option value="expense">expense</option>
+      </select>
+
+      <input type="date" v-model="transaction.date">
+      <input type ="number" v-model="transaction.sum">
+      
+      <select v-model="transaction.category">
+        <option v-for="category in categorySelect[transaction.type]" :value="category.value">{{ category.text }}</option>
+      </select>
+      
+      <input v-model="transaction.comment" placeholder="comment">
+      <button type="submit">Add transaction</button> 
+    </form>
+  </div>
 </template>
