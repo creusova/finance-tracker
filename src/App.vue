@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import BalanceBlock from './components/balanceBlock.vue'
 import TransactionForm from './components/transactionForm.vue'
 import TransactionTable from './components/transactionTable.vue'
@@ -43,10 +43,6 @@ function addTransaction(transaction) {
   transactions.value.push(transaction)
 }
 
-function selectedConsole() {
-  console.log(selected.value)
-  console.log(transactionDate.value)
-}
 </script>
 
 <template>
@@ -56,9 +52,7 @@ function selectedConsole() {
 
   <main>
     <BalanceBlock :balance="balance" :income="income" :expense="expense" />
-
     <TransactionForm @add-transaction="addTransaction" />
-
     <TransactionTable :transactions="transactions" />
   </main>
 </template>
