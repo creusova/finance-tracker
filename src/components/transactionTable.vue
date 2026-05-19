@@ -10,9 +10,8 @@ defineProps({
 </script>
 
 <template>
-  <div>
-   
-    <table border="1">
+  <div class="table">
+    <table>
     <thead>
       <tr>               
         <th>Type</th>
@@ -23,16 +22,17 @@ defineProps({
       </tr>
     </thead>
     <tbody>              
-      <!-- <tr v-for="transaction in transactions" :key="transaction.id"> -->
-      <!-- <td>{{ transaction.type }}</td>
-      <td>{{ transaction.date }}</td>
-      <td>{{ transaction.sum }}</td>
-      <td>{{ transaction.category }}</td>
-      <td>{{ transaction.comment }}</td> -->
         <TransactionRow v-for="transaction in transactions" :key="transaction.id" :transaction="transaction" />
-      <!-- </tr> -->
     </tbody>
     </table>
 
   </div>
 </template>
+
+<style scoped>
+.table{
+  display: flex;
+  margin-top: 10px;
+  width: 100%;
+}
+</style>

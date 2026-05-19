@@ -46,15 +46,38 @@ function addTransaction(transaction) {
 </script>
 
 <template>
-  <header>
-    <h1>Finance Traker</h1>
-  </header>
+  <div class="app">
+    <header>
+      <h1 class="header">Finance Traker</h1>
+    </header>
 
-  <main>
-    <BalanceBlock :balance="balance" :income="income" :expense="expense" />
-    <TransactionForm @add-transaction="addTransaction" />
-    <TransactionTable :transactions="transactions" />
-  </main>
+    <main>
+      <div class="main">
+        <BalanceBlock :balance="balance" :income="income" :expense="expense" />
+        <TransactionForm @add-transaction="addTransaction" />
+        <TransactionTable :transactions="transactions" />
+      </div>
+    </main>
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.app{
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+}
+.header{
+  text-align: center;
+  color: #22388a;
+  text-transform: uppercase;
+  font-size: 3em;
+}
+.main{
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+</style>
