@@ -7,6 +7,12 @@ defineProps({
     default: () => [],
   },
 })
+
+const emit=defineEmits(['delete-transaction'])
+
+function deleteTransaction(id){
+  emit('delete-transaction',id)
+}
 </script>
 
 <template>
@@ -23,7 +29,10 @@ defineProps({
       </tr>
     </thead>
     <tbody class="table-body">              
-        <TransactionRow v-for="transaction in transactions" :key="transaction.id" :transaction="transaction" />
+        <TransactionRow v-for="transaction in transactions" 
+          :key="transaction.id" 
+          :transaction="transaction" 
+          @delete-transaction="deleteTransaction"/>
     </tbody>
     </table>
 

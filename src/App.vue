@@ -43,6 +43,11 @@ function addTransaction(transaction) {
   transactions.value.push(transaction)
 }
 
+function deleteTransaction(id){
+  const index = transactions.value.findIndex((item)=>item.id === id)
+  transactions.value.splice(index,1)
+}
+
 </script>
 
 <template>
@@ -55,7 +60,7 @@ function addTransaction(transaction) {
       <div class="main">
         <BalanceBlock :balance="balance" :income="income" :expense="expense" />
         <TransactionForm @add-transaction="addTransaction" />
-        <TransactionTable :transactions="transactions" />
+        <TransactionTable :transactions="transactions" @delete-transaction="deleteTransaction" />
       </div>
     </main>
   </div>
