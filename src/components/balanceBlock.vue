@@ -50,7 +50,7 @@
   text-transform: uppercase;
   font-size: 20px;
   font-weight: 600;
-  color: #d99036;
+  color: #e3ae1d;
   margin:0;
 }
 .num{
@@ -60,7 +60,7 @@
   margin-bottom: 0;
 }
 .balance{
-  border-top: 5px solid #63adb9;
+  border-top: 5px solid #28698f;
 }
 .income{
   border-top: 5px solid #597d4f;

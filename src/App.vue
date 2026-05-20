@@ -71,7 +71,7 @@ function addTransaction(transaction) {
 }
 .header{
   text-align: center;
-  color: #22388a;
+  color: #1a4192;
   text-transform: uppercase;
   font-size: 3em;
 }
