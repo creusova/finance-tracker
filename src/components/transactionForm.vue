@@ -48,6 +48,7 @@
     emit('add-transaction',newTransaction)
     transaction.sum = ''
     transaction.comment =''
+    transaction.date =(new Date().toISOString().split('T')[0])
   }
 
 </script>
