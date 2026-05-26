@@ -1,27 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import BalanceBlock from './components/balanceBlock.vue'
 import TransactionForm from './components/transactionForm.vue'
 import TransactionTable from './components/transactionTable.vue'
 
-const transactions = ref([
-  {
-    id: 1,
-    type: 'expense',
-    date: '2026-04-10',
-    sum: 12,
-    category: 'Food',
-    comment: '',
-  },
-  {
-    id: 2,
-    type: 'income',
-    date: '2026-04-10',
-    sum: 12000,
-    category: 'Work',
-    comment: 'new',
-  },
-])
+const transactions = ref([])
 
 const income = computed(() => {
   return transactions.value
@@ -45,8 +28,38 @@ function addTransaction(transaction) {
 
 function deleteTransaction(id){
   const index = transactions.value.findIndex((item)=>item.id === id)
+  if (index<0){
+    console.log('error:cannot find transaction for delete')
+    return
+  }
   transactions.value.splice(index,1)
 }
+
+function saveTransaction(){
+  localStorage.setItem("transactions", JSON.stringify(transactions.value));
+}
+
+function loadTransaction(){
+  try {
+    const data = JSON.parse(localStorage.getItem("transactions"))
+    if(Array.isArray(data)){
+      transactions.value = data
+    }
+  } catch (error) {
+    console.log('error data',error)
+    localStorage.removeItem("transactions")
+    transactions.value =[]
+  }
+}
+
+onMounted(()=>{
+  loadTransaction()
+})
+
+watch(()=>transactions.value,() =>{
+  saveTransaction()},
+  { deep: true }
+)
 
 </script>
 
