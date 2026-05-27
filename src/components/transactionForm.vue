@@ -26,7 +26,7 @@
     watch(()=>transaction.type,(newValue)=>{
       if(newValue==='expense') transaction.category = 'Food'
       else transaction.category = 'Work'
-  })
+    })
 
   const disabledBtn = computed(()=> transaction.sum <= 0)
 

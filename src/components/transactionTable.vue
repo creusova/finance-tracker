@@ -9,6 +9,7 @@ const props = defineProps({
   },
 })
 
+console.log(props.transactions)
 const emit=defineEmits(['delete-transaction'])
 
 function deleteTransaction(id){
@@ -95,11 +96,16 @@ const sortIconDate = computed(()=>{
         <th class="table-header">Action</th>
       </tr>
     </thead>
-    <tbody class="table-body">              
-        <TransactionRow v-for="transaction in sortedTransaction" 
-          :key="transaction.id" 
-          :transaction="transaction" 
-          @delete-transaction="deleteTransaction"/>
+    <tbody v-if ="transactions.length === 0">              
+      <tr>
+        <td colspan="6" class="no-transaction-row">No transaction yet</td>
+      </tr>
+    </tbody>
+    <tbody v-else>
+      <TransactionRow v-for="transaction in sortedTransaction" 
+        :key="transaction.id" 
+        :transaction="transaction" 
+        @delete-transaction="deleteTransaction"/>
     </tbody>
     </table>
   </div>
@@ -124,6 +130,10 @@ const sortIconDate = computed(()=>{
   background: #ffd562d5;
   text-align: center;
   border: 1px solid;
+}
+.no-transaction-row{
+  padding: 12px 10px;
+  text-align: center;
 }
 .sorting-cell{
   display: flex;
