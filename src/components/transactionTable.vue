@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import TransactionRow from './transactionRow.vue'
 
 const props = defineProps({
@@ -9,15 +9,30 @@ const props = defineProps({
   },
 })
 
-console.log(props.transactions)
 const emit=defineEmits(['delete-transaction'])
 
 function deleteTransaction(id){
   emit('delete-transaction',id)
 }
 
+const typeFilter = ref('')
+
+const visableTransaction = computed(()=>{
+  const allTransactions = [...props.transactions]
+
+  if(typeFilter.value === 'income'){
+    const filterTransaction = allTransactions.filter((t)=>t.type === 'income')
+    return filterTransaction
+  }
+  else if(typeFilter.value === 'expense'){
+    const filterTransaction = allTransactions.filter((t)=>t.type === 'expense')
+    return filterTransaction
+  }
+  return allTransactions
+})
+
 const sortedTransaction = computed(()=>{
-  const sorted = [...props.transactions]
+  const sorted = [...visableTransaction.value]
   if(sortSumMethod.value ==='asc'){
     sorted.sort((a, b) => a.sum - b.sum)
   }
@@ -33,33 +48,35 @@ const sortedTransaction = computed(()=>{
   return sorted
 })
 
-let sortSumMethod = ref('none')
-let sortDateMethod = ref('none')
+const sortSumMethod = ref('none')
+const sortDateMethod = ref('asc')
+
 
 function sortTransaction(type){
   if (type==='date'){
     if (sortDateMethod.value === 'none' || sortDateMethod.value === 'desc') {
       sortDateMethod.value = 'asc'
       sortSumMethod.value = 'none'
-      sortIconDate.value = '↓'
     } else {
       sortDateMethod.value = 'desc'
       sortSumMethod.value = 'none'
-      sortIconDate.value = '↑'
     }
   }
   else if(type==='sum'){
     if (sortSumMethod.value === 'none' || sortSumMethod.value === 'desc') {
       sortSumMethod.value = 'asc'
       sortDateMethod.value = 'none' 
-      sortIconSum.value = '↓' 
     } else {
       sortSumMethod.value = 'desc'
       sortDateMethod.value = 'none'
-      sortIconSum.value = '↑'
     }
   }
 }
+
+watch(typeFilter,()=>{
+  sortSumMethod.value = 'none'
+  sortDateMethod.value = 'asc'
+})
 
 const sortIconSum = computed(()=>{
   if(sortSumMethod.value === 'none' || sortSumMethod.value === 'desc')
@@ -71,6 +88,7 @@ const sortIconDate = computed(()=>{
     return '↓'
   else return '↑'
 })
+
 </script>
 
 <template>
@@ -78,7 +96,16 @@ const sortIconDate = computed(()=>{
     <table class="transaction-table">
     <thead>
       <tr>               
-        <th class="table-header">Type</th>
+        <th class="table-header">
+          <div class="sorting-cell">
+            <p>Type</p>
+            <select v-model="typeFilter" class="selected">
+              <option value="" class="select-option">filter</option>
+              <option value="income" class="select-option">income</option>
+              <option value="expense" class="select-option">expense</option>
+            </select>
+          </div>
+        </th>
         <th class="table-header">
           <div class="sorting-cell">
             <p>Date</p>
@@ -91,7 +118,11 @@ const sortIconDate = computed(()=>{
             <button class="btn-sorting" @click="sortTransaction('sum')"> {{ sortIconSum }}</button>
           </div>
         </th>
-        <th class="table-header">Category</th>
+        <th class="table-header">
+          <div>
+            <p>Category</p>
+          </div>
+        </th>
         <th class="table-header">Comment</th>
         <th class="table-header">Action</th>
       </tr>
@@ -99,6 +130,11 @@ const sortIconDate = computed(()=>{
     <tbody v-if ="transactions.length === 0">              
       <tr>
         <td colspan="6" class="no-transaction-row">No transaction yet</td>
+      </tr>
+    </tbody>
+    <tbody v-else-if ="sortedTransaction.length === 0">              
+      <tr>
+        <td colspan="6" class="no-transaction-row">No filter transactions</td>
       </tr>
     </tbody>
     <tbody v-else>
@@ -134,6 +170,12 @@ const sortIconDate = computed(()=>{
 .no-transaction-row{
   padding: 12px 10px;
   text-align: center;
+}
+.selected{
+  background: #ffd562d5;
+}
+.select-option{
+  background: #f9efd4d5;
 }
 .sorting-cell{
   display: flex;
