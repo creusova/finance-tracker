@@ -1,31 +1,20 @@
 <script setup>
     import { reactive, computed, watch } from 'vue'
+    import {CATEGORIES_BY_TYPE, DEFAULT_CATEGORY } from '../category.js'
 
     const emit = defineEmits(['add-transaction'])
 
     const transaction = reactive({
       type: 'expense',
       date: (new Date().toISOString().split('T')[0]),
-      sum: '',
-      category: 'Food',
+      sum: 0,
+      category: DEFAULT_CATEGORY.expense,
       comment: ''
     })
 
-    const categorySelect = {
-      expense:[
-        {text: 'Food', value: 'Food'},
-        {text: 'Car', value: 'Car'},
-        {text: 'Home', value: 'Home'},
-      ],
-      income:[
-        {text: 'Work', value: 'Work'},
-        {text: 'Card', value: 'Card'},
-      ]
-    }
-
     watch(()=>transaction.type,(newValue)=>{
-      if(newValue==='expense') transaction.category = 'Food'
-      else transaction.category = 'Work'
+      if(newValue==='expense') transaction.category = DEFAULT_CATEGORY.expense
+      else transaction.category = DEFAULT_CATEGORY.income
     })
 
   const disabledBtn = computed(()=> transaction.sum <= 0)
@@ -65,7 +54,7 @@
       <input type ="number" v-model="transaction.sum"  placeholder="0" class="form-input">
       
       <select v-model="transaction.category" class="form-input">
-        <option v-for="category in categorySelect[transaction.type]" :value="category.value">{{ category.text }}</option>
+        <option v-for="category in CATEGORIES_BY_TYPE[transaction.type]" :value="category.value">{{ category.text }}</option>
       </select>
       
       <input v-model="transaction.comment" placeholder="comment" class="form-input">

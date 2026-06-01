@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import TransactionRow from './transactionRow.vue'
+import {CATEGORIES_BY_TYPE, ALL_CATEGORIES, DEFAULT_CATEGORY } from '../category.js'
 
 const props = defineProps({
   transactions: {
@@ -16,23 +17,50 @@ function deleteTransaction(id){
 }
 
 const typeFilter = ref('')
+const categoryFilter = ref('')
 
-const visableTransaction = computed(()=>{
-  const allTransactions = [...props.transactions]
+const categoryForSelected = computed(()=>{
+  let category = ALL_CATEGORIES
 
   if(typeFilter.value === 'income'){
-    const filterTransaction = allTransactions.filter((t)=>t.type === 'income')
-    return filterTransaction
+    category = CATEGORIES_BY_TYPE.income
   }
   else if(typeFilter.value === 'expense'){
-    const filterTransaction = allTransactions.filter((t)=>t.type === 'expense')
-    return filterTransaction
+    category = CATEGORIES_BY_TYPE.expense
   }
-  return allTransactions
+  
+  return category
 })
 
+
+const visibleTransaction = computed(()=>{
+  const allTransactions = [...props.transactions]
+
+  let filterTransaction = checkTypeFilter(allTransactions)
+  filterTransaction = checkCategoryFilter(filterTransaction)
+
+
+  return filterTransaction
+})
+
+function checkTypeFilter(transactions){
+  if(typeFilter.value !== ''){
+    const filterTransaction = transactions.filter((t)=>t.type === typeFilter.value)
+    return filterTransaction
+  }
+  else return transactions
+}
+
+function checkCategoryFilter(transactions){
+  if(categoryFilter.value !== ''){
+    const filterCategoryTransaction = transactions.filter((t)=>t.category === categoryFilter.value)
+    return filterCategoryTransaction
+  }
+  else return transactions
+}
+
 const sortedTransaction = computed(()=>{
-  const sorted = [...visableTransaction.value]
+  const sorted = [...visibleTransaction.value]
   if(sortSumMethod.value ==='asc'){
     sorted.sort((a, b) => a.sum - b.sum)
   }
@@ -76,6 +104,7 @@ function sortTransaction(type){
 watch(typeFilter,()=>{
   sortSumMethod.value = 'none'
   sortDateMethod.value = 'asc'
+  categoryFilter.value=''
 })
 
 const sortIconSum = computed(()=>{
@@ -88,6 +117,8 @@ const sortIconDate = computed(()=>{
     return '↓'
   else return '↑'
 })
+
+
 
 </script>
 
@@ -119,8 +150,12 @@ const sortIconDate = computed(()=>{
           </div>
         </th>
         <th class="table-header">
-          <div>
+          <div class="sorting-cell">
             <p>Category</p>
+            <select v-model="categoryFilter" class="selected">
+              <option value="" class="select-option">filter...</option>
+              <option v-for="category in categoryForSelected" :value="category.value">{{ category.text }}</option>
+            </select>
           </div>
         </th>
         <th class="table-header">Comment</th>
