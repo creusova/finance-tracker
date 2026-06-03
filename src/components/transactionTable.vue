@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import TransactionRow from './transactionRow.vue'
-import {CATEGORIES_BY_TYPE, ALL_CATEGORIES, DEFAULT_CATEGORY } from '../category.js'
+import {CATEGORIES_BY_TYPE, ALL_CATEGORIES } from '../category.js'
 
 const props = defineProps({
   transactions: {
@@ -38,7 +38,9 @@ const visibleTransaction = computed(()=>{
 
   let filterTransaction = checkTypeFilter(allTransactions)
   filterTransaction = checkCategoryFilter(filterTransaction)
-
+  if (isDateFilterActive.value === true){
+    filterTransaction = checkDateFilter(filterTransaction)
+  }
 
   return filterTransaction
 })
@@ -55,6 +57,14 @@ function checkCategoryFilter(transactions){
   if(categoryFilter.value !== ''){
     const filterCategoryTransaction = transactions.filter((t)=>t.category === categoryFilter.value)
     return filterCategoryTransaction
+  }
+  else return transactions
+}
+
+function checkDateFilter(transactions){
+  if(dateFrom.value !== '' && dateTo.value !== ''){
+    const filterDateTransaction = transactions.filter((t)=>(t.date >= dateFrom.value && t.date <= dateTo.value))
+    return filterDateTransaction
   }
   else return transactions
 }
@@ -77,7 +87,7 @@ const sortedTransaction = computed(()=>{
 })
 
 const sortSumMethod = ref('none')
-const sortDateMethod = ref('asc')
+const sortDateMethod = ref('desc')
 
 
 function sortTransaction(type){
@@ -103,7 +113,7 @@ function sortTransaction(type){
 
 watch(typeFilter,()=>{
   sortSumMethod.value = 'none'
-  sortDateMethod.value = 'asc'
+  sortDateMethod.value = 'desc'
   categoryFilter.value=''
 })
 
@@ -118,7 +128,59 @@ const sortIconDate = computed(()=>{
   else return '↑'
 })
 
+const dateFrom = ref('')
+const dateTo = ref('')
+const showDateFilter = ref(false)
+const errorMsg = ref('')
+const applyError = ref(false)
+const isDateFilterActive = ref(false)
+const errorDate = computed(()=>{
+  if((dateFrom.value > dateTo.value) && dateFrom.value !=='' && dateTo.value !==''){
+    return true
+  }
+  if(applyError.value){
+     return true
+  }
+  else return false
+})
 
+function toggleDateFilter() {
+  showDateFilter.value = !showDateFilter.value
+}
+
+function clearDateFilter() {
+  dateFrom.value = ''
+  dateTo.value = ''
+  isDateFilterActive.value = false
+  applyError.value = false
+  errorMsg.value = ''
+}
+
+function applyDateFilter(){
+  if(dateFrom.value === ''){
+    errorMsg.value='No From Date'
+    applyError.value = true
+    isDateFilterActive.value = false
+  }
+  else if(dateTo.value === ''){
+    errorMsg.value='No To Date'
+    applyError.value = true
+    isDateFilterActive.value = false
+  }
+  else if(dateFrom.value > dateTo.value){
+    applyError.value = true
+    errorMsg.value ='Date To earlier then From'
+  }
+  else {
+    isDateFilterActive.value = true
+    showDateFilter.value = false
+    applyError.value = false
+    errorMsg.value = ''
+  }
+
+}
+
+watch([dateFrom, dateTo], () => { applyError.value = false })
 
 </script>
 
@@ -131,16 +193,28 @@ const sortIconDate = computed(()=>{
           <div class="sorting-cell">
             <p>Type</p>
             <select v-model="typeFilter" class="selected">
-              <option value="" class="select-option">filter</option>
-              <option value="income" class="select-option">income</option>
-              <option value="expense" class="select-option">expense</option>
+              <option value="" class="select-option">All</option>
+              <option value="income" class="select-option">Income</option>
+              <option value="expense" class="select-option">Expense</option>
             </select>
           </div>
         </th>
         <th class="table-header">
-          <div class="sorting-cell">
+          <div class="date-header">
             <p>Date</p>
             <button class="btn-sorting" @click="sortTransaction('date')"> {{ sortIconDate }}</button>
+            <button @click="toggleDateFilter" class="filter-btn" :class="{ 'filter-active': isDateFilterActive}">📅</button>
+            <div v-if="showDateFilter" class="date-popup">
+              <label>From</label>
+              <input type="date" v-model="dateFrom">
+              <label>To</label>
+              <input type="date" v-model="dateTo">
+              <div class="popup-actions">
+                <button @click="clearDateFilter">Clear</button>
+                <button @click="applyDateFilter">Apply</button>
+              </div>
+              <div v-if="errorDate" class="error-msg">{{errorMsg}}</div>
+            </div>
           </div>
         </th>
         <th class="table-header">
@@ -153,7 +227,7 @@ const sortIconDate = computed(()=>{
           <div class="sorting-cell">
             <p>Category</p>
             <select v-model="categoryFilter" class="selected">
-              <option value="" class="select-option">filter...</option>
+              <option value="" class="select-option">All</option>
               <option v-for="category in categoryForSelected" :value="category.value">{{ category.text }}</option>
             </select>
           </div>
@@ -169,7 +243,7 @@ const sortIconDate = computed(()=>{
     </tbody>
     <tbody v-else-if ="sortedTransaction.length === 0">              
       <tr>
-        <td colspan="6" class="no-transaction-row">No filter transactions</td>
+        <td colspan="6" class="no-transaction-row">No filtered transactions</td>
       </tr>
     </tbody>
     <tbody v-else>
@@ -230,5 +304,76 @@ const sortIconDate = computed(()=>{
 }
 .btn-sorting:active{
   transform: scale(0.98);
+}
+
+.date-header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items:center;
+  gap:10px;
+}
+.filter-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.filter-active{
+  background: #0d98475c;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.date-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  padding: 12px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+
+.date-popup label {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.date-popup input {
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+.popup-actions button {
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.error-msg{
+  z-index: 1000;
+  font-size: 14px;
+  color:red;
+  padding-top: 10px;
 }
 </style>
