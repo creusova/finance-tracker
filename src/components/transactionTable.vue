@@ -76,9 +76,15 @@ const categoryOptions = computed(()=>{
   return category
 })
 
+const searchText = ref("")
 
 const visibleTransactions = computed(()=>{
   const allTransactions = [...props.transactions]
+
+  if(searchText.value !==''){
+    let query = searchText.value.trim().toLowerCase()
+    return allTransactions.filter((t)=>t.comment?.toLowerCase().includes(query))
+  }
 
   let filterTransaction = checkTypeFilter(allTransactions)
   filterTransaction = checkCategoryFilter(filterTransaction)
@@ -231,6 +237,11 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
 </script>
 
 <template>
+  <div class="search">
+    <p>Search</p>
+    <input v-model="searchText" placeholder="Search by comment"></input>
+    <button @click="searchText = ''">Cancel</button>
+  </div>
   <div class="table">
     <div v-if="isModalOpen" class="modal-edit">
       <div class="edit-transaction">
@@ -320,6 +331,26 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
 </template>
 
 <style scoped>
+.search{
+  margin:0px;
+  display: flex;
+  flex-direction: row;
+  gap:20px;
+  justify-content: end;
+  align-items: center; 
+}
+.search input{
+  height: 60%;
+  display: flex;
+}
+.search button{
+  cursor: pointer;
+  border: 0.5px solid rgb(132, 131, 131);
+  border-radius: 5px;
+  padding: 0px 5px;
+  background: #e0bc5ad5;
+  padding: 3px 6px;
+}
 .table{
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.189);
   border-radius: 12px;
