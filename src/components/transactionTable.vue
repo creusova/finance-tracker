@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import TransactionRow from './transactionRow.vue'
 import {CATEGORIES_BY_TYPE, ALL_CATEGORIES } from '../category.js'
+import TransactionFieldsComponent from './TransactionFieldsComponent.vue'
 
 const props = defineProps({
   transactions: {
@@ -10,16 +11,59 @@ const props = defineProps({
   },
 })
 
-const emit=defineEmits(['delete-transaction'])
+const emit=defineEmits(['delete-transaction','edit-transaction'])
 
 function deleteTransaction(id){
   emit('delete-transaction',id)
 }
 
+const transactionEdit = ref({})
+const originalTransaction = ref({})
+const editingTransactionId = ref('')
+
+const isModalOpen = ref(false)
+
+
+const hasChangesTransaction = computed(()=>{
+  return (
+    (originalTransaction.value.sum !== (+transactionEdit.value.sum) ||
+    originalTransaction.value.type !== transactionEdit.value.type ||
+    originalTransaction.value.category !== transactionEdit.value.category ||
+    originalTransaction.value.date !== transactionEdit.value.date ||
+    originalTransaction.value.comment !== transactionEdit.value.comment)
+    && +transactionEdit.value.sum>0
+  )
+})
+
+const disabledSave = computed(() => !hasChangesTransaction.value)
+
+function editTransaction(id){
+  const transaction = props.transactions.find((item)=>item.id === id)
+  if (!transaction){
+    console.log("cannot find transaction for edit")
+    return
+  } 
+  editingTransactionId.value = id
+  isModalOpen.value = true
+  transactionEdit.value = {...transaction}
+  originalTransaction.value = {...transaction}
+}
+
+function submitEdit(){
+  emit('edit-transaction',editingTransactionId.value,transactionEdit.value)
+  isModalOpen.value = false
+}
+
+function closeModal(){
+  isModalOpen.value = false
+  transactionEdit.value = {}
+  originalTransaction.value = {}
+}
+
 const typeFilter = ref('')
 const categoryFilter = ref('')
 
-const categoryForSelected = computed(()=>{
+const categoryOptions = computed(()=>{
   let category = ALL_CATEGORIES
 
   if(typeFilter.value === 'income'){
@@ -33,7 +77,7 @@ const categoryForSelected = computed(()=>{
 })
 
 
-const visibleTransaction = computed(()=>{
+const visibleTransactions = computed(()=>{
   const allTransactions = [...props.transactions]
 
   let filterTransaction = checkTypeFilter(allTransactions)
@@ -69,8 +113,8 @@ function checkDateFilter(transactions){
   else return transactions
 }
 
-const sortedTransaction = computed(()=>{
-  const sorted = [...visibleTransaction.value]
+const sortedTransactions = computed(()=>{
+  const sorted = [...visibleTransactions.value]
   if(sortSumMethod.value ==='asc'){
     sorted.sort((a, b) => a.sum - b.sum)
   }
@@ -134,6 +178,7 @@ const showDateFilter = ref(false)
 const errorMsg = ref('')
 const applyError = ref(false)
 const isDateFilterActive = ref(false)
+
 const errorDate = computed(()=>{
   if((dateFrom.value > dateTo.value) && dateFrom.value !=='' && dateTo.value !==''){
     return true
@@ -169,6 +214,7 @@ function applyDateFilter(){
   }
   else if(dateFrom.value > dateTo.value){
     applyError.value = true
+    isDateFilterActive.value = false
     errorMsg.value ='Date To earlier then From'
   }
   else {
@@ -186,6 +232,17 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
 
 <template>
   <div class="table">
+    <div v-if="isModalOpen" class="modal-edit">
+      <div class="edit-transaction">
+        <TransactionFieldsComponent :transaction="transactionEdit"/>
+      </div>
+      <div class="edit-actions">
+        <button @click="submitEdit" class="edit-actions-btn" :disabled="disabledSave">Save</button>
+        <button @click="closeModal" class="edit-actions-btn">Close</button>
+      </div>
+    </div>
+
+
     <table class="transaction-table">
     <thead>
       <tr>               
@@ -199,17 +256,18 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
             </select>
           </div>
         </th>
+        
         <th class="table-header">
           <div class="date-header">
             <p>Date</p>
             <button class="btn-sorting" @click="sortTransaction('date')"> {{ sortIconDate }}</button>
             <button @click="toggleDateFilter" class="filter-btn" :class="{ 'filter-active': isDateFilterActive}">📅</button>
-            <div v-if="showDateFilter" class="date-popup">
+            <div v-if="showDateFilter" class="select-date">
               <label>From</label>
               <input type="date" v-model="dateFrom">
               <label>To</label>
               <input type="date" v-model="dateTo">
-              <div class="popup-actions">
+              <div class="select-date-actions">
                 <button @click="clearDateFilter">Clear</button>
                 <button @click="applyDateFilter">Apply</button>
               </div>
@@ -217,40 +275,45 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
             </div>
           </div>
         </th>
+        
         <th class="table-header">
           <div class="sorting-cell">
             <p>Sum</p>
             <button class="btn-sorting" @click="sortTransaction('sum')"> {{ sortIconSum }}</button>
           </div>
         </th>
+        
         <th class="table-header">
           <div class="sorting-cell">
             <p>Category</p>
             <select v-model="categoryFilter" class="selected">
               <option value="" class="select-option">All</option>
-              <option v-for="category in categoryForSelected" :value="category.value">{{ category.text }}</option>
+              <option v-for="category in categoryOptions" :value="category.value">{{ category.text }}</option>
             </select>
           </div>
         </th>
+        
         <th class="table-header">Comment</th>
         <th class="table-header">Action</th>
       </tr>
     </thead>
+    
     <tbody v-if ="transactions.length === 0">              
       <tr>
         <td colspan="6" class="no-transaction-row">No transaction yet</td>
       </tr>
     </tbody>
-    <tbody v-else-if ="sortedTransaction.length === 0">              
+    <tbody v-else-if ="sortedTransactions.length === 0">              
       <tr>
         <td colspan="6" class="no-transaction-row">No filtered transactions</td>
       </tr>
     </tbody>
     <tbody v-else>
-      <TransactionRow v-for="transaction in sortedTransaction" 
+      <TransactionRow v-for="transaction in sortedTransactions" 
         :key="transaction.id" 
         :transaction="transaction" 
-        @delete-transaction="deleteTransaction"/>
+        @delete-transaction="deleteTransaction"
+        @edit-transaction="editTransaction"/>
     </tbody>
     </table>
   </div>
@@ -261,7 +324,9 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.189);
   border-radius: 12px;
   margin: 10px;
+  position: relative;
 }
+
 .transaction-table{
   margin: 10px;
   table-layout: fixed;
@@ -326,7 +391,7 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
 
-.date-popup {
+.select-date {
   position: absolute;
   top: 100%;
   left: 0;
@@ -341,27 +406,27 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
   min-width: 200px;
 }
 
-.date-popup label {
+.select-date label {
   font-size: 11px;
   color: #666;
   text-transform: uppercase;
 }
 
-.date-popup input {
+.select-date input {
   padding: 6px 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 13px;
 }
 
-.popup-actions {
+.select-date-actions {
   display: flex;
   gap: 6px;
   margin-top: 8px;
   justify-content: flex-end;
 }
 
-.popup-actions button {
+.select-date-actions button {
   padding: 4px 12px;
   border-radius: 4px;
   border: 1px solid #ddd;
@@ -375,5 +440,52 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
   font-size: 14px;
   color:red;
   padding-top: 10px;
+}
+.modal-edit{
+  position: absolute;
+  top: 20%;
+  left: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  padding: 12px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 20px;
+}
+
+.edit-transaction{
+  display:grid;
+  flex-direction: row;
+}
+
+.edit-actions{
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 10px;
+}
+.edit-actions-btn{
+  background: #4a947b;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  white-space: nowrap; 
+  font-size: 18px;
+}
+
+.edit-actions-btn:hover{
+ background: #64bc9e;
+}
+.edit-actions-btn:active{
+  transform: scale(0.98);
+}
+.edit-actions-btn:disabled{
+  background: #9b9a9a5d;
+  cursor: not-allowed;
+  color: rgb(87, 86, 86);
 }
 </style>

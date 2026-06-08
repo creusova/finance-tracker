@@ -10,12 +10,12 @@ export const CATEGORIES_BY_TYPE = {
   ],
 }
 
-// для фильтра «все типы» в таблице
+
 export const ALL_CATEGORIES = [
   ...CATEGORIES_BY_TYPE.income,
   ...CATEGORIES_BY_TYPE.expense,
 ]
-// чтобы не писать 'Food' / 'Work' строками в двух watch
+
 export const DEFAULT_CATEGORY = {
   income: 'Work',
   expense: 'Food',

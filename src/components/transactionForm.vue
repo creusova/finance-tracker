@@ -1,6 +1,7 @@
 <script setup>
-    import { reactive, computed, watch } from 'vue'
-    import {CATEGORIES_BY_TYPE, DEFAULT_CATEGORY } from '../category.js'
+    import { reactive, computed } from 'vue'
+    import {DEFAULT_CATEGORY } from '../category.js'
+    import TransactionFieldsComponent from './TransactionFieldsComponent.vue'
 
     const emit = defineEmits(['add-transaction'])
 
@@ -10,11 +11,6 @@
       sum: 0,
       category: DEFAULT_CATEGORY.expense,
       comment: ''
-    })
-
-    watch(()=>transaction.type,(newValue)=>{
-      if(newValue==='expense') transaction.category = DEFAULT_CATEGORY.expense
-      else transaction.category = DEFAULT_CATEGORY.income
     })
 
   const disabledBtn = computed(()=> transaction.sum <= 0)
@@ -35,7 +31,7 @@
     }
     
     emit('add-transaction',newTransaction)
-    transaction.sum = ''
+    transaction.sum = 0
     transaction.comment =''
     transaction.date =(new Date().toISOString().split('T')[0])
   }
@@ -45,19 +41,7 @@
 <template>
   <div class="transaction-form-view">
     <form @submit.prevent="addTransaction" class="transaction-form">
-      <select v-model="transaction.type" class="form-input">
-        <option value="income">Income</option>
-        <option value="expense">Expense</option>
-      </select>
-
-      <input type="date" v-model="transaction.date" class="form-input">
-      <input type ="number" v-model="transaction.sum"  placeholder="0" class="form-input">
-      
-      <select v-model="transaction.category" class="form-input">
-        <option v-for="category in CATEGORIES_BY_TYPE[transaction.type]" :value="category.value">{{ category.text }}</option>
-      </select>
-      
-      <input v-model="transaction.comment" placeholder="comment" class="form-input">
+      <TransactionFieldsComponent :transaction="transaction"/>
       <button type="submit" class="form-input" :disabled="disabledBtn">Add transaction</button> 
     </form>
   </div>

@@ -26,74 +26,92 @@ function addTransaction(transaction) {
   transactions.value.push(transaction)
 }
 
-function deleteTransaction(id){
-  const index = transactions.value.findIndex((item)=>item.id === id)
-  if (index<0){
-    console.log('error:cannot find transaction for delete')
+function deleteTransaction(id) {
+  const index = transactions.value.findIndex((item) => item.id === id)
+  if (index < 0) {
+    console.log('Error: cannot find transaction for delete')
     return
   }
-  transactions.value.splice(index,1)
+  transactions.value.splice(index, 1)
 }
 
-function saveTransaction(){
-  localStorage.setItem("transactions", JSON.stringify(transactions.value));
+function editTransaction(id, newTransaction) {
+  const index = transactions.value.findIndex((item) => item.id === id)
+   if (index < 0) {
+    console.log('Edit Transaction: index transaction < 0')
+    return
+  }
+  transactions.value[index] = {
+    ...newTransaction,
+    sum:+newTransaction.sum
+  }
 }
 
-function loadTransaction(){
+function saveTransaction() {
+  localStorage.setItem('transactions', JSON.stringify(transactions.value))
+}
+
+function loadTransaction() {
   try {
-    const data = JSON.parse(localStorage.getItem("transactions"))
-    if(Array.isArray(data)){
+    const data = JSON.parse(localStorage.getItem('transactions'))
+    if (Array.isArray(data)) {
       transactions.value = data
     }
   } catch (error) {
-    console.log('error data',error)
-    localStorage.removeItem("transactions")
-    transactions.value =[]
+    console.log('error data', error)
+    localStorage.removeItem('transactions')
+    transactions.value = []
   }
 }
 
-onMounted(()=>{
+onMounted(() => {
   loadTransaction()
 })
 
-watch(()=>transactions.value,() =>{
-  saveTransaction()},
-  { deep: true }
+watch(
+  () => transactions.value,
+  () => {
+    saveTransaction()
+  },
+  { deep: true },
 )
-
 </script>
 
 <template>
   <div class="app">
     <header>
-      <h1 class="header">Finance Traker</h1>
+      <h1 class="header">Finance Tracker</h1>
     </header>
 
     <main>
       <div class="main">
         <BalanceBlock :balance="balance" :income="income" :expense="expense" />
         <TransactionForm @add-transaction="addTransaction" />
-        <TransactionTable :transactions="transactions" @delete-transaction="deleteTransaction" />
+        <TransactionTable
+          :transactions="transactions"
+          @delete-transaction="deleteTransaction"
+          @edit-transaction="editTransaction"
+        />
       </div>
     </main>
   </div>
 </template>
 
 <style scoped>
-.app{
+.app {
   max-width: 900px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   font-family: Arial, sans-serif;
 }
-.header{
+.header {
   text-align: center;
   color: #1a4192;
   text-transform: uppercase;
   font-size: 3em;
 }
-.main{
+.main {
   display: flex;
   flex-direction: column;
   gap: 20px;

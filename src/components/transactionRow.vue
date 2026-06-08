@@ -8,7 +8,7 @@ const props = defineProps({
   },
 })
 
-const emit=defineEmits(['delete-transaction'])
+const emit=defineEmits(['delete-transaction','edit-transaction'])
 
 const sumClasses = computed(() => ({
   'income': props.transaction.type === 'income',
@@ -17,6 +17,10 @@ const sumClasses = computed(() => ({
 }))
  function deleteTransaction(){
   emit('delete-transaction',props.transaction.id)
+ }
+ 
+ function editTransaction(){
+  emit('edit-transaction',props.transaction.id)
  }
 
 </script>
@@ -30,7 +34,7 @@ const sumClasses = computed(() => ({
       <td>{{ transaction.comment }}</td>
       <td>
         <div class="action-cell">
-          <button class="action-btn"> ✏️ </button>
+          <button class="action-btn" @click="editTransaction"> ✏️ </button>
           <button class="action-btn" @click="deleteTransaction"> 🗑️ </button>
         </div>
       </td>
