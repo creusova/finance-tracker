@@ -13,15 +13,35 @@ const props = defineProps({
 
 const emit=defineEmits(['delete-transaction','edit-transaction'])
 
-function deleteTransaction(id){
-  emit('delete-transaction',id)
-}
 
 const transactionEdit = ref({})
 const originalTransaction = ref({})
 const editingTransactionId = ref('')
 
 const isModalOpen = ref(false)
+const isDeleteModalOpen = ref(false)
+const deletingTransactionId = ref('')
+const deleteTransactionCurrent = ref('')
+
+
+function deleteTransaction(id){
+  // emit('delete-transaction',id)
+  deleteTransactionCurrent.value = props.transactions.find((item)=>item.id === id)
+  isDeleteModalOpen.value = true
+  deletingTransactionId.value = id
+
+}
+
+function cancelDelete(){
+  isDeleteModalOpen.value = false
+  deletingTransactionId.value =''
+}
+
+function confirmDelete(){
+  emit('delete-transaction',deletingTransactionId.value)
+  isDeleteModalOpen.value = false
+  deletingTransactionId.value =''
+}
 
 
 const hasChangesTransaction = computed(()=>{
@@ -252,6 +272,21 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
         <button @click="closeModal" class="edit-actions-btn">Close</button>
       </div>
     </div>
+    <div v-if="isDeleteModalOpen">
+        <div class="modal-delete">
+          <p class="comfirm-delete-text">Do you want to delete transaction? </p>
+          <p class="comfirm-delete-text"> {{ deleteTransactionCurrent.type}} 
+            {{ deleteTransactionCurrent.date }} 
+            {{ deleteTransactionCurrent.sum }}
+            {{ deleteTransactionCurrent.category }}
+            {{ deleteTransactionCurrent.comment }}
+          </p>
+          <div class="delete-actions">
+            <button @click="confirmDelete" class="delete-actions-btn" >Confirm</button>
+            <button @click="cancelDelete" class="delete-actions-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
 
 
     <table class="transaction-table">
@@ -515,6 +550,59 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
   transform: scale(0.98);
 }
 .edit-actions-btn:disabled{
+  background: #9b9a9a5d;
+  cursor: not-allowed;
+  color: rgb(87, 86, 86);
+}
+.modal-delete{
+  position: absolute;
+  top: 20%;
+  left: 15%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  padding: 12px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 20px;
+  width: 60%
+}
+.comfirm-delete{
+  display: flex;
+}
+.comfirm-delete-text{
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+.delete-actions{
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.delete-actions-btn{
+  background: #4a947b;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  white-space: nowrap; 
+  font-size: 16px;
+  padding: 5px 1px;
+}
+
+.delete-actions-btn:hover{
+ background: #64bc9e;
+}
+.delete-actions-btn:active{
+  transform: scale(0.98);
+}
+.delete-actions-btn:disabled{
   background: #9b9a9a5d;
   cursor: not-allowed;
   color: rgb(87, 86, 86);
