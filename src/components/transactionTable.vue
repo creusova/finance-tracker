@@ -2,7 +2,8 @@
 import { computed, ref, watch } from 'vue'
 import TransactionRow from './transactionRow.vue'
 import {CATEGORIES_BY_TYPE, ALL_CATEGORIES } from '../category.js'
-import TransactionFieldsComponent from './TransactionFieldsComponent.vue'
+import EditModalComponentVue from './EditModalComponentVue.vue'
+import DeleteModalComponent from './DeleteModalComponent.vue'
 
 const props = defineProps({
   transactions: {
@@ -18,14 +19,13 @@ const transactionEdit = ref({})
 const originalTransaction = ref({})
 const editingTransactionId = ref('')
 
-const isModalOpen = ref(false)
+const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const deletingTransactionId = ref('')
-const deleteTransactionCurrent = ref('')
+const deleteTransactionCurrent = ref(null)
 
 
 function deleteTransaction(id){
-  // emit('delete-transaction',id)
   deleteTransactionCurrent.value = props.transactions.find((item)=>item.id === id)
   isDeleteModalOpen.value = true
   deletingTransactionId.value = id
@@ -44,19 +44,6 @@ function confirmDelete(){
 }
 
 
-const hasChangesTransaction = computed(()=>{
-  return (
-    (originalTransaction.value.sum !== (+transactionEdit.value.sum) ||
-    originalTransaction.value.type !== transactionEdit.value.type ||
-    originalTransaction.value.category !== transactionEdit.value.category ||
-    originalTransaction.value.date !== transactionEdit.value.date ||
-    originalTransaction.value.comment !== transactionEdit.value.comment)
-    && +transactionEdit.value.sum>0
-  )
-})
-
-const disabledSave = computed(() => !hasChangesTransaction.value)
-
 function editTransaction(id){
   const transaction = props.transactions.find((item)=>item.id === id)
   if (!transaction){
@@ -64,18 +51,18 @@ function editTransaction(id){
     return
   } 
   editingTransactionId.value = id
-  isModalOpen.value = true
+  isEditModalOpen.value = true
   transactionEdit.value = {...transaction}
   originalTransaction.value = {...transaction}
 }
 
 function submitEdit(){
   emit('edit-transaction',editingTransactionId.value,transactionEdit.value)
-  isModalOpen.value = false
+  isEditModalOpen.value = false
 }
 
 function closeModal(){
-  isModalOpen.value = false
+  isEditModalOpen.value = false
   transactionEdit.value = {}
   originalTransaction.value = {}
 }
@@ -103,7 +90,9 @@ const visibleTransactions = computed(()=>{
 
   if(searchText.value !==''){
     let query = searchText.value.trim().toLowerCase()
-    return allTransactions.filter((t)=>t.comment?.toLowerCase().includes(query))
+    if(query !==""){
+      return allTransactions.filter((t)=>t.comment?.toLowerCase().includes(query))
+    }
   }
 
   let filterTransaction = checkTypeFilter(allTransactions)
@@ -263,30 +252,18 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
     <button @click="searchText = ''">Cancel</button>
   </div>
   <div class="table">
-    <div v-if="isModalOpen" class="modal-edit">
-      <div class="edit-transaction">
-        <TransactionFieldsComponent :transaction="transactionEdit"/>
-      </div>
-      <div class="edit-actions">
-        <button @click="submitEdit" class="edit-actions-btn" :disabled="disabledSave">Save</button>
-        <button @click="closeModal" class="edit-actions-btn">Close</button>
-      </div>
+    <div v-if="isEditModalOpen" class="modal-window">
+      <EditModalComponentVue :transaction="transactionEdit"
+      @submit-edit="submitEdit"
+      @close-edit="closeModal"/>
     </div>
-    <div v-if="isDeleteModalOpen">
-        <div class="modal-delete">
-          <p class="comfirm-delete-text">Do you want to delete transaction? </p>
-          <p class="comfirm-delete-text"> {{ deleteTransactionCurrent.type}} 
-            {{ deleteTransactionCurrent.date }} 
-            {{ deleteTransactionCurrent.sum }}
-            {{ deleteTransactionCurrent.category }}
-            {{ deleteTransactionCurrent.comment }}
-          </p>
-          <div class="delete-actions">
-            <button @click="confirmDelete" class="delete-actions-btn" >Confirm</button>
-            <button @click="cancelDelete" class="delete-actions-btn">Cancel</button>
-          </div>
-        </div>
-      </div>
+    <div v-if="isDeleteModalOpen" class="modal-window">
+      <DeleteModalComponent 
+      :transaction="deleteTransactionCurrent"
+      @confirm-delete="confirmDelete"
+      @cancel-delete="cancelDelete"/>
+    </div>
+    
 
 
     <table class="transaction-table">
@@ -374,10 +351,7 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
   justify-content: end;
   align-items: center; 
 }
-.search input{
-  height: 60%;
-  display: flex;
-}
+
 .search button{
   cursor: pointer;
   border: 0.5px solid rgb(132, 131, 131);
@@ -507,7 +481,7 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
   color:red;
   padding-top: 10px;
 }
-.modal-edit{
+.modal-window{
   position: absolute;
   top: 20%;
   left: 0;
@@ -520,91 +494,5 @@ watch([dateFrom, dateTo], () => { applyError.value = false })
   flex-direction: column;
   gap: 4px;
   margin-left: 20px;
-}
-
-.edit-transaction{
-  display:grid;
-  flex-direction: row;
-}
-
-.edit-actions{
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 10px;
-}
-.edit-actions-btn{
-  background: #4a947b;
-  color: white;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-  white-space: nowrap; 
-  font-size: 18px;
-}
-
-.edit-actions-btn:hover{
- background: #64bc9e;
-}
-.edit-actions-btn:active{
-  transform: scale(0.98);
-}
-.edit-actions-btn:disabled{
-  background: #9b9a9a5d;
-  cursor: not-allowed;
-  color: rgb(87, 86, 86);
-}
-.modal-delete{
-  position: absolute;
-  top: 20%;
-  left: 15%;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-  padding: 12px;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-left: 20px;
-  width: 60%
-}
-.comfirm-delete{
-  display: flex;
-}
-.comfirm-delete-text{
-  display: flex;
-  justify-content: center;
-  margin-bottom: 10px;
-  margin-top: 10px;
-}
-
-.delete-actions{
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
-
-.delete-actions-btn{
-  background: #4a947b;
-  color: white;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-  white-space: nowrap; 
-  font-size: 16px;
-  padding: 5px 1px;
-}
-
-.delete-actions-btn:hover{
- background: #64bc9e;
-}
-.delete-actions-btn:active{
-  transform: scale(0.98);
-}
-.delete-actions-btn:disabled{
-  background: #9b9a9a5d;
-  cursor: not-allowed;
-  color: rgb(87, 86, 86);
 }
 </style>
